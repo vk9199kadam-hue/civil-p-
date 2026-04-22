@@ -181,8 +181,31 @@ const ProjectDetails = () => {
                 </div>
 
                 <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
-                  <button className="btn btn-primary" style={{ flex: 1, padding: '1rem' }}><Phone size={18} /> Contact Dealer</button>
-                  <button className="btn btn-success" style={{ flex: 1, padding: '1rem' }}><MessageCircle size={18} /> WhatsApp</button>
+                  <button className="btn btn-primary" style={{ flex: 1, padding: '1rem' }} onClick={async () => {
+                    const leadData = {
+                      name: 'Anonymous (Contact Click)',
+                      phone: 'Clicked Contact',
+                      message: `Inquiry for Unit ${selectedUnit.number} in ${project.name}`,
+                      propertyName: project.name,
+                      propertyId: project.id,
+                      unitRef: selectedUnit.number
+                    };
+                    await fetch('/api/leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(leadData) });
+                    alert('Dealer contact requested! They will be notified.');
+                  }}><Phone size={18} /> Contact Dealer</button>
+                  
+                  <button className="btn btn-success" style={{ flex: 1, padding: '1rem' }} onClick={async () => {
+                    const leadData = {
+                      name: 'Anonymous (WhatsApp Click)',
+                      phone: 'Clicked WhatsApp',
+                      message: `WhatsApp Inquiry for Unit ${selectedUnit.number} in ${project.name}`,
+                      propertyName: project.name,
+                      propertyId: project.id,
+                      unitRef: selectedUnit.number
+                    };
+                    await fetch('/api/leads', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(leadData) });
+                    window.open(`https://wa.me/919970349818?text=I am interested in Unit ${selectedUnit.number} at ${project.name}`, '_blank');
+                  }}><MessageCircle size={18} /> WhatsApp</button>
                 </div>
               </div>
 
@@ -200,11 +223,34 @@ const ProjectDetails = () => {
                 <h3>Schedule Site Visit</h3>
                 <button onClick={() => setShowVisitForm(false)} style={{ border: 'none', background: 'none', cursor: 'pointer' }}><X size={24} /></button>
               </div>
-              <form onSubmit={e => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                <input type="text" placeholder="Full Name" style={inputStyle} />
-                <input type="tel" placeholder="Phone Number" style={inputStyle} />
-                <input type="date" style={inputStyle} />
-                <button className="btn btn-primary" style={{ width: '100%', padding: '1rem', marginTop: '1rem' }}>Request Visit</button>
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                const fd = new FormData(e.target);
+                const leadData = {
+                  name: fd.get('name'),
+                  phone: fd.get('phone'),
+                  message: `Schedule Visit for ${fd.get('date')}`,
+                  propertyName: project.name,
+                  propertyId: project.id
+                };
+                try {
+                  const res = await fetch('/api/leads', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(leadData)
+                  });
+                  if (res.ok) {
+                    alert('Visit Request Sent Successfully!');
+                    setShowVisitForm(false);
+                  }
+                } catch (err) {
+                  alert('Error sending request.');
+                }
+              }} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <input name="name" type="text" placeholder="Full Name" style={inputStyle} required />
+                <input name="phone" type="tel" placeholder="Phone Number" style={inputStyle} required />
+                <input name="date" type="date" style={inputStyle} required />
+                <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '1rem', marginTop: '1rem' }}>Request Visit</button>
               </form>
             </motion.div>
           </div>
