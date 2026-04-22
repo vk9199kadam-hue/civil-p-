@@ -214,16 +214,59 @@ const CreateProjectFlow = ({ goToProjects }) => {
 
                 {formData.type === 'building' && (
                   <div>
-                    <label style={labelStyle}>Specify Remaining Types</label>
-                    <input type="text" style={inputStyle} value={formData.breakdownText || ''} onChange={e => setFormData({...formData, breakdownText: e.target.value})} placeholder="e.g., 5 of 2BHK, 5 of 3BHK" />
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>This information will be visible to users for clarity.</p>
+                    <label style={labelStyle}>Available Configurations (BHK / Types)</label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      {["1 RK", "1 BHK", "1.5 BHK", "2 BHK", "2.5 BHK", "3 BHK", "4 BHK+", "Penthouse", "Shop"].map(conf => (
+                        <div 
+                          key={conf} 
+                          onClick={() => {
+                            const current = formData.configurations || [];
+                            setFormData({...formData, configurations: current.includes(conf) ? current.filter(c => c !== conf) : [...current, conf]});
+                          }}
+                          style={{ 
+                            padding: '0.4rem 0.8rem', 
+                            borderRadius: '20px', 
+                            fontSize: '0.8rem', 
+                            fontWeight: 600, 
+                            cursor: 'pointer',
+                            border: `1px solid ${(formData.configurations || []).includes(conf) ? 'var(--primary-blue)' : 'var(--border-light)'}`,
+                            backgroundColor: ${(formData.configurations || []).includes(conf) ? 'var(--primary-blue)' : 'white'},
+                            color: ${(formData.configurations || []).includes(conf) ? 'white' : 'var(--text-muted)'}
+                          }}
+                        >
+                          {conf}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
                 
                 {formData.type === 'land' && (
                   <div>
-                    <label style={labelStyle}>Specify Remaining Plot Sizes</label>
-                    <input type="text" style={inputStyle} value={formData.breakdownText || ''} onChange={e => setFormData({...formData, breakdownText: e.target.value})} placeholder="e.g., 2 of 1000 sq.ft, 8 of 1500 sq.ft" />
+                    <label style={labelStyle}>Available Plot Sizes</label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      {["500 Sq.Ft", "1000 Sq.Ft", "1500 Sq.Ft", "2000 Sq.Ft", "1 Guntha", "2 Guntha", "5 Guntha", "Half Acre", "1 Acre+"].map(conf => (
+                        <div 
+                          key={conf} 
+                          onClick={() => {
+                            const current = formData.configurations || [];
+                            setFormData({...formData, configurations: current.includes(conf) ? current.filter(c => c !== conf) : [...current, conf]});
+                          }}
+                          style={{ 
+                            padding: '0.4rem 0.8rem', 
+                            borderRadius: '20px', 
+                            fontSize: '0.8rem', 
+                            fontWeight: 600, 
+                            cursor: 'pointer',
+                            border: `1px solid ${(formData.configurations || []).includes(conf) ? 'var(--primary-blue)' : 'var(--border-light)'}`,
+                            backgroundColor: ${(formData.configurations || []).includes(conf) ? 'var(--primary-blue)' : 'white'},
+                            color: ${(formData.configurations || []).includes(conf) ? 'white' : 'var(--text-muted)'}
+                          }}
+                        >
+                          {conf}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
