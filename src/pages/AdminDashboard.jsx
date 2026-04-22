@@ -179,6 +179,26 @@ const CreateProjectFlow = ({ goToProjects }) => {
                   <input type="text" placeholder="e.g. Main Highway, Islampur" style={inputStyle} value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} />
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={labelStyle}>Project Cover Image (URL)</label>
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                    <input 
+                      type="text" 
+                      placeholder="Paste direct image link here" 
+                      style={{ ...inputStyle, flex: 1 }} 
+                      value={formData.coverImage} 
+                      onChange={e => setFormData({...formData, coverImage: e.target.value})} 
+                    />
+                    {formData.coverImage && (
+                      <div style={{ width: '120px', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '2px solid var(--primary-blue)', backgroundColor: '#f0f0f0' }}>
+                        <img src={formData.coverImage} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => e.target.src = 'https://via.placeholder.com/120x80?text=Invalid+Link'} />
+                      </div>
+                    )}
+                  </div>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
+                    💡 Tip: Upload to <a href="https://postimages.org/" target="_blank" rel="noreferrer" style={{ color: 'var(--primary-blue)', textDecoration: 'underline' }}>PostImages.org</a>, then copy the <strong>Direct Link</strong> ending in .jpg or .png
+                  </p>
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
                   <label style={labelStyle}>Description</label>
                   <textarea rows="4" style={inputStyle} placeholder="Project highlights, developer details..." value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
                 </div>
@@ -325,8 +345,25 @@ const CreateProjectFlow = ({ goToProjects }) => {
                   <input type="text" style={inputStyle} placeholder="Lift, Power Backup, Gym..." value={formData.amenitiesText} onChange={e => setFormData({...formData, amenitiesText: e.target.value})} />
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={labelStyle}>Property Image URL</label>
-                  <input type="text" style={inputStyle} placeholder="https://example.com/image.jpg" value={formData.coverImage} onChange={e => setFormData({...formData, coverImage: e.target.value})} />
+                  <label style={labelStyle}>Project Cover Image (URL)</label>
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                    <input 
+                      type="text" 
+                      placeholder="https://images.unsplash.com/photo..." 
+                      className="input-field" 
+                      value={formData.coverImage || ''}
+                      onChange={(e) => setFormData({...formData, coverImage: e.target.value})}
+                      style={{ flex: 1 }}
+                    />
+                    {formData.coverImage && (
+                      <div style={{ width: '100px', height: '60px', borderRadius: '8px', overflow: 'hidden', border: '2px solid var(--primary-blue)' }}>
+                        <img src={formData.coverImage} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => e.target.src = 'https://via.placeholder.com/100x60?text=Invalid+URL'} />
+                      </div>
+                    )}
+                  </div>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
+                    Tip: Upload your photo to <a href="https://postimages.org/" target="_blank" rel="noreferrer" style={{ color: 'var(--primary-blue)' }}>PostImages.org</a> and paste the <strong>Direct Link</strong> here.
+                  </p>
                 </div>
               </div>
             </div>
