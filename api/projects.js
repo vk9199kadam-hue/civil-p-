@@ -20,8 +20,9 @@ export default async function handler(req, res) {
     // --- EMERGENCY SCHEMA FIX ---
     // This forcibly resets the table structure to ensure ALL columns exist.
     // We only need to run this once to fix the current error.
-    await client.query(`DROP TABLE IF EXISTS projects`);
-    await client.query(`DROP TABLE IF EXISTS leads`);
+    await client.query(`DROP TABLE IF EXISTS units CASCADE`);
+    await client.query(`DROP TABLE IF EXISTS projects CASCADE`);
+    await client.query(`DROP TABLE IF EXISTS leads CASCADE`);
 
     // Auto-create table with FRESH structure
     await client.query(`
