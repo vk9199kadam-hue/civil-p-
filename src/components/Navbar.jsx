@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Building2, Search, User, MapPin, Menu } from 'lucide-react';
+import { Building2, User } from 'lucide-react';
 
 const Navbar = () => {
   return (
@@ -16,15 +16,11 @@ const Navbar = () => {
           </div>
         </Link>
 
-        {/* Desktop Links - Point 14 */}
+        {/* Desktop Links */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
           <div className="nav-links" style={{ display: 'flex', gap: '1.5rem', fontWeight: 600, fontSize: '0.9rem' }}>
-            <Link to="/listings?type=buy" style={{ color: 'var(--deep-navy)', textDecoration: 'none' }}>Buy</Link>
-            <Link to="/listings?type=rent" style={{ color: 'var(--deep-navy)', textDecoration: 'none' }}>Rent</Link>
-            <Link to="/listings?cat=projects" style={{ color: 'var(--deep-navy)', textDecoration: 'none' }}>Projects</Link>
-            <Link to="/listings?cat=commercial" style={{ color: 'var(--deep-navy)', textDecoration: 'none' }}>Commercial</Link>
-            <Link to="/listings?cat=land" style={{ color: 'var(--deep-navy)', textDecoration: 'none' }}>Land</Link>
-            <Link to="/admin" style={{ color: 'var(--primary-blue)', textDecoration: 'none' }}>Admin</Link>
+            <Link to="/" style={{ color: 'var(--deep-navy)', textDecoration: 'none' }}>Home</Link>
+            <Link to="/admin" style={{ color: 'var(--primary-blue)', textDecoration: 'none' }}>Admin Dashboard</Link>
           </div>
 
           <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-light)' }}></div>
@@ -40,3 +36,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+

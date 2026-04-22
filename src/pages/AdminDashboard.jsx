@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { PROJECTS, LEADS } from '../data/mockData';
+import { PROJECT_CATEGORIES } from '../data/config';
 import { 
   Plus, Settings, LayoutGrid, FileText, 
   BarChart3, Users, Building, Map, Trash2, Edit,
-  CheckCircle2, Clock, MessageSquare, Phone, TrendingUp, Search, Download
+  CheckCircle2, Clock, MessageSquare, Phone, TrendingUp, Search, Download,
+  ArrowRight, ArrowLeft, Image as ImageIcon, Check, X, Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState('overview'); // overview, projects, inventory, leads
-  const [selectedProject, setSelectedProject] = useState(PROJECTS[0]);
+  const [activeTab, setActiveTab] = useState('overview'); // overview, projects, create-project, leads
+  const [selectedProjectType, setSelectedProjectType] = useState(null); // building or land
 
   return (
     <div className="animate-fade-in" style={{ minHeight: '100vh', backgroundColor: '#f8fafc' }}>
@@ -23,7 +25,7 @@ const AdminDashboard = () => {
                 <div style={{ backgroundColor: 'var(--deep-navy)', color: 'white', padding: '0.4rem', borderRadius: '4px' }}>
                   <Settings size={20} />
                 </div>
-                <h3 style={{ fontSize: '1.1rem' }}>Command Center</h3>
+                <h3 style={{ fontSize: '1.1rem' }}>Admin Portal</h3>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -33,15 +35,12 @@ const AdminDashboard = () => {
                 <button onClick={() => setActiveTab('projects')} style={{ ...tabStyle, ...(activeTab === 'projects' ? activeTabStyle : {}) }}>
                   <Building size={18} /> Projects
                 </button>
-                <button onClick={() => setActiveTab('inventory')} style={{ ...tabStyle, ...(activeTab === 'inventory' ? activeTabStyle : {}) }}>
-                  <LayoutGrid size={18} /> Inventory Grid
+                <button onClick={() => setActiveTab('create-project')} style={{ ...tabStyle, ...(activeTab === 'create-project' ? activeTabStyle : {}) }}>
+                  <Plus size={18} /> Add New Project
                 </button>
                 <button onClick={() => setActiveTab('leads')} style={{ ...tabStyle, ...(activeTab === 'leads' ? activeTabStyle : {}) }}>
-                  <Users size={18} /> Leads & Inquiries
+                  <Users size={18} /> Inquiries
                 </button>
-                <div style={{ margin: '1rem 0', height: '1px', backgroundColor: 'var(--border-light)' }}></div>
-                <button style={tabStyle}> <FileText size={18} /> Documents</button>
-                <button style={tabStyle}> <Download size={18} /> Export Reports</button>
               </div>
             </div>
           </aside>
@@ -50,7 +49,7 @@ const AdminDashboard = () => {
           <main style={{ flex: 1 }}>
             {activeTab === 'overview' && <OverviewView />}
             {activeTab === 'projects' && <ProjectsView />}
-            {activeTab === 'inventory' && <InventoryGridView project={selectedProject} onProjectChange={setSelectedProject} />}
+            {activeTab === 'create-project' && <CreateProjectFlow goToProjects={() => setActiveTab('projects')} />}
             {activeTab === 'leads' && <LeadsView />}
           </main>
 
@@ -60,16 +59,308 @@ const AdminDashboard = () => {
   );
 };
 
+// --- MULTI-STEP CREATE PROJECT FLOW ---
+
+const CreateProjectFlow = ({ goToProjects }) => {
+  const [step, setStep] = useState(1);
+  const [formData, setFormData] = useState({
+    name: '',
+    location: '',
+    type: '', // building, land
+    category: 'RESIDENTIAL',
+    subType: '',
+    totalUnits: 0,
+    totalFloors: 0,
+    totalArea: '',
+    description: '',
+    coverImage: '',
+    inventory: [] // Array of unit objects
+  });
+
+  const nextStep = () => setStep(s => s + 1);
+  const prevStep = () => setStep(s => s - 1);
+
+  const handleTypeSelect = (type) => {
+    setFormData({ ...formData, type });
+    nextStep();
+  };
+
+  const handleBasicInfo = (data) => {
+    setFormData({ ...formData, ...data });
+    nextStep();
+  };
+
+  const generateInventory = (remUnitsCount) => {
+    const newInventory = Array.from({ length: remUnitsCount }, (_, i) => ({
+      id: `unit-${i + 1}`,
+      number: i + 1,
+      name: formData.type === 'building' ? `Flat ${i + 1}` : `Plot ${i + 1}`,
+      floor: formData.type === 'building' ? 1 : null,
+      status: 'available',
+      price: '',
+      area: '',
+      type: '', // 2BHK etc
+      images: [],
+      description: ''
+    }));
+    setFormData({ ...formData, inventory: newInventory, remainingUnits: remUnitsCount });
+    nextStep();
+  };
+
+  const updateUnit = (index, unitData) => {
+    const updated = [...formData.inventory];
+    updated[index] = { ...updated[index], ...unitData };
+    setFormData({ ...formData, inventory: updated });
+  };
+
+  return (
+    <div className="animate-fade-in">
+      <div style={{ marginBottom: '2rem' }}>
+        <button onClick={step === 1 ? goToProjects : prevStep} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontWeight: 600 }}>
+          <ArrowLeft size={18} /> {step === 1 ? 'Back to Projects' : 'Previous Step'}
+        </button>
+        <h2 style={{ marginTop: '1rem' }}>Step {step}: {
+          step === 1 ? 'Select Project Type' : 
+          step === 2 ? 'Project Category & Details' :
+          step === 3 ? 'Inventory Configuration' :
+          'Unit Level Details'
+        }</h2>
+      </div>
+
+      <AnimatePresence mode="wait">
+        {step === 1 && (
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginTop: '2rem' }}>
+              <TypeCard 
+                icon={<Building size={48} />} 
+                title="Building Project" 
+                desc="Apartments, Commercial Complexes, Multi-story buildings" 
+                onClick={() => handleTypeSelect('building')}
+              />
+              <TypeCard 
+                icon={<Map size={48} />} 
+                title="Land / NA Plot Project" 
+                desc="Acreage projects, Plotting schemes, Agricultural layouts" 
+                onClick={() => handleTypeSelect('land')}
+              />
+            </div>
+          </motion.div>
+        )}
+
+        {step === 2 && (
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            <div className="glass" style={{ backgroundColor: 'white', padding: '2rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-light)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={labelStyle}>Project Name</label>
+                  <input type="text" placeholder="e.g. Green Valley Residency" style={inputStyle} value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Major Category</label>
+                  <select style={inputStyle} value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
+                    {Object.keys(PROJECT_CATEGORIES).map(cat => <option key={cat} value={cat}>{PROJECT_CATEGORIES[cat].name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Project Sub-type</label>
+                  <select style={inputStyle} value={formData.subType} onChange={e => setFormData({...formData, subType: e.target.value})}>
+                    <option value="">Select sub-type...</option>
+                    {PROJECT_CATEGORIES[formData.category].subTypes.map(st => <option key={st.name} value={st.name}>{st.name}</option>)}
+                  </select>
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={labelStyle}>Location / Landmark</label>
+                  <input type="text" placeholder="e.g. Main Highway, Islampur" style={inputStyle} value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} />
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={labelStyle}>Description</label>
+                  <textarea rows="4" style={inputStyle} placeholder="Project highlights, developer details..." value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+                </div>
+              </div>
+              <button className="btn btn-primary" style={{ width: '100%', marginTop: '2rem', padding: '1rem' }} onClick={nextStep}>
+                Next: Setup Inventory <ArrowRight size={18} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {step === 3 && (
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            <div className="glass" style={{ backgroundColor: 'white', padding: '2rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-light)' }}>
+              <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                <p style={{ fontWeight: 600, color: 'var(--primary-blue)' }}>{formData.type === 'building' ? 'INVENTORY STRUCTURE' : 'PLOT STRUCTURE'}</p>
+                <h3 style={{ fontSize: '1.5rem' }}>Define Project Size & Remaining Units</h3>
+              </div>
+              
+              <div style={{ maxWidth: '500px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div>
+                    <label style={labelStyle}>Total Unsold & Sold Units in Project</label>
+                    <input type="number" style={inputStyle} value={formData.totalUnits} onChange={e => setFormData({...formData, totalUnits: e.target.value})} placeholder="e.g. 50" />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>How many remain for Sale?</label>
+                    <input type="number" style={inputStyle} value={formData.remainingUnits} onChange={e => setFormData({...formData, remainingUnits: e.target.value})} placeholder="e.g. 10" />
+                  </div>
+                </div>
+
+                {formData.type === 'building' && (
+                  <div>
+                    <label style={labelStyle}>Specify Remaining Types</label>
+                    <input type="text" style={inputStyle} value={formData.breakdownText || ''} onChange={e => setFormData({...formData, breakdownText: e.target.value})} placeholder="e.g., 5 of 2BHK, 5 of 3BHK" />
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>This information will be visible to users for clarity.</p>
+                  </div>
+                )}
+                
+                {formData.type === 'land' && (
+                  <div>
+                    <label style={labelStyle}>Specify Remaining Plot Sizes</label>
+                    <input type="text" style={inputStyle} value={formData.breakdownText || ''} onChange={e => setFormData({...formData, breakdownText: e.target.value})} placeholder="e.g., 2 of 1000 sq.ft, 8 of 1500 sq.ft" />
+                  </div>
+                )}
+
+                <button className="btn btn-primary" style={{ padding: '1rem', marginTop: '1rem' }} onClick={() => generateInventory(parseInt(formData.remainingUnits || 0))}>
+                  Generate Grid for {formData.remainingUnits || 0} Remaining Units <LayoutGrid size={18} />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {step === 4 && (
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            <div className="glass" style={{ backgroundColor: 'white', padding: '2rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-light)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                <div>
+                  <h3>Interactive Inventory Grid</h3>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Click on each box to fill details for that specific unit.</p>
+                </div>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem' }}>
+                    <div style={{ width: '12px', height: '12px', backgroundColor: 'var(--success-green)', borderRadius: '2px' }}></div> Configured
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem' }}>
+                    <div style={{ width: '12px', height: '12px', border: '1px solid var(--border-light)', borderRadius: '2px' }}></div> Pending
+                  </div>
+                  <button className="btn btn-success" onClick={() => {
+                    alert('Project Saved to Database Conceptually!');
+                    goToProjects();
+                  }}>Save Complete Project</button>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem' }}>
+                {formData.inventory.map((unit, idx) => (
+                  <UnitBox key={unit.id} unit={unit} onEdit={(data) => updateUnit(idx, data)} projectType={formData.type} />
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+const UnitBox = ({ unit, onEdit, projectType }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({ ...unit });
+
+  const isConfigured = editData.price && editData.area;
+
+  return (
+    <>
+      <motion.div 
+        whileHover={{ y: -3, shadow: 'var(--shadow-md)' }}
+        onClick={() => setIsEditing(true)}
+        style={{ 
+          padding: '1rem', 
+          borderRadius: '12px', 
+          border: `2px solid ${isConfigured ? 'var(--success-green)' : 'var(--border-light)'}`, 
+          textAlign: 'center', 
+          cursor: 'pointer',
+          backgroundColor: isConfigured ? 'rgba(16, 185, 129, 0.05)' : 'transparent',
+          transition: 'all 0.2s'
+        }}
+      >
+        <p style={{ fontSize: '0.7rem', fontWeight: 800, opacity: 0.6 }}>{projectType === 'building' ? `FLOOR ${unit.floor}` : 'PLOT'}</p>
+        <p style={{ fontWeight: 800, fontSize: '1.2rem', margin: '0.25rem 0' }}>{unit.number}</p>
+        {isConfigured ? (
+          <p style={{ fontSize: '0.65rem', color: 'var(--success-green)', fontWeight: 700 }}>CONFIGURED ✓</p>
+        ) : (
+          <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>PENDING</p>
+        )}
+      </motion.div>
+
+      {/* Unit Edit Modal */}
+      <AnimatePresence>
+        {isEditing && (
+          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="glass" style={{ backgroundColor: 'white', width: '100%', maxWidth: '600px', padding: '2.5rem', borderRadius: 'var(--radius-xl)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                <h3>Configure {projectType === 'building' ? 'Flat' : 'Plot'} {unit.number}</h3>
+                <button onClick={() => setIsEditing(false)} style={{ border: 'none', background: 'none', cursor: 'pointer' }}><X size={24} /></button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+                <div>
+                  <label style={labelStyle}>Price (₹)</label>
+                  <input type="number" style={inputStyle} value={editData.price} onChange={e => setEditData({...editData, price: e.target.value})} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Area ({projectType === 'building' ? 'sq.ft' : 'sq.yd/Acres'})</label>
+                  <input type="text" style={inputStyle} value={editData.area} onChange={e => setEditData({...editData, area: e.target.value})} />
+                </div>
+                <div>
+                  <label style={labelStyle}>{projectType === 'building' ? 'Configuration (BHK)' : 'Zone Type'}</label>
+                  <input type="text" style={inputStyle} value={editData.type} onChange={e => setEditData({...editData, type: e.target.value})} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Images</label>
+                  <div style={{ border: '2px dashed var(--border-light)', padding: '0.5rem', borderRadius: '8px', textAlign: 'center', cursor: 'pointer' }}>
+                    <ImageIcon size={20} color="var(--text-muted)" />
+                    <p style={{ fontSize: '0.7rem' }}>Click to upload</p>
+                  </div>
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={labelStyle}>Specific Details / Amenities</label>
+                  <textarea rows="3" style={inputStyle} value={editData.description} onChange={e => setEditData({...editData, description: e.target.value})} />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
+                <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => {
+                  onEdit(editData);
+                  setIsEditing(false);
+                }}>Apply to Unit</button>
+                <button className="btn btn-success" style={{ flex: 1 }} onClick={() => {
+                   // Mock "Apply to All Remaining"
+                   alert('Applied these details to all pending units!');
+                   onEdit(editData);
+                   setIsEditing(false);
+                }}>Apply to All Similar</button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+};
+
 // --- SUB-VIEWS ---
 
 const OverviewView = () => (
   <div className="animate-fade-in">
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
       <h2>Dashboard Overview</h2>
-      <button className="btn btn-primary"><Plus size={18} /> New Project</button>
+      <div style={{ display: 'flex', gap: '1rem' }}>
+        <button className="btn btn-outline-blue"><Download size={18} /> Export Reports</button>
+        <button className="btn btn-primary"><Plus size={18} /> New Project</button>
+      </div>
     </div>
     
-    {/* Widgets - Point 8 */}
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem', marginBottom: '2.5rem' }}>
       <Widget icon={<Building color="var(--primary-blue)" />} label="Total Projects" value={PROJECTS.length} />
       <Widget icon={<LayoutGrid color="var(--success-green)" />} label="Available Units" value="22" color="var(--success-green)" />
@@ -109,7 +400,6 @@ const ProjectsView = () => (
   <div className="animate-fade-in">
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
       <h2>Manage Projects</h2>
-      <button className="btn btn-primary"><Plus size={18} /> Create Project</button>
     </div>
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       {PROJECTS.map(p => (
@@ -133,120 +423,46 @@ const ProjectsView = () => (
   </div>
 );
 
-const InventoryGridView = ({ project, onProjectChange }) => (
-  <div className="animate-fade-in">
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-      <div>
-        <h2>Inventory Management Grid</h2>
-        <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Project: {project.name}</p>
-      </div>
-      <div style={{ display: 'flex', gap: '1rem' }}>
-        <select onChange={(e) => onProjectChange(PROJECTS.find(p => p.id === e.target.value))} style={{ padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
-          {PROJECTS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
-        <button className="btn btn-outline-blue"><Download size={18} /> CSV Export</button>
-      </div>
-    </div>
-
-    {/* Legend - Point 10 */}
-    <div className="glass" style={{ padding: '1.5rem', borderRadius: 'var(--radius-lg)', backgroundColor: 'white', border: '1px solid var(--border-light)' }}>
-      <div style={{ display: 'flex', gap: '2rem', marginBottom: '2rem', borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem' }}>
-        <LegendItem color="var(--success-green)" label="Available" count={10} />
-        <LegendItem color="var(--gold-premium)" label="Booked" count={5} />
-        <LegendItem color="var(--warm-coral)" label="Sold" count={12} />
-        <LegendItem color="#94a3b8" label="Blocked" count={3} />
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '0.75rem' }}>
-        {/* Mock Units for Grid */}
-        {[...Array(30)].map((_, i) => {
-          let status = 'available';
-          if (i > 15) status = 'sold';
-          if (i > 25) status = 'booked';
-          if (i === 28 || i === 29) status = 'blocked';
-
-          const colors = {
-            available: 'var(--success-green)',
-            sold: 'var(--warm-coral)',
-            booked: 'var(--gold-premium)',
-            blocked: '#94a3b8'
-          };
-
-          return (
-            <div key={i} style={{ 
-              height: '80px', 
-              backgroundColor: 'white', 
-              border: `2px solid ${colors[status]}`, 
-              borderRadius: '8px', 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              cursor: 'pointer',
-              position: 'relative'
-            }}>
-              <p style={{ fontSize: '0.65rem', fontWeight: 800, opacity: 0.6 }}>{Math.floor(i/10 + 1)}0{i%10 + 1}</p>
-              <p style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--deep-navy)' }}>{i+1}</p>
-              <div style={{ position: 'absolute', bottom: 4, right: 4, width: '6px', height: '6px', borderRadius: '50%', backgroundColor: colors[status] }}></div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  </div>
-);
-
 const LeadsView = () => (
   <div className="animate-fade-in">
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-      <h2>Lead Management</h2>
-      <div style={{ display: 'flex', gap: '1rem' }}>
-        <div className="search-pill" style={{ backgroundColor: 'white', border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', padding: '0.5rem 1rem', borderRadius: '99px' }}>
-          <Search size={16} /><input type="text" placeholder="Search leads..." style={{ border: 'none', outline: 'none', marginLeft: '0.5rem' }} />
+    <h2>Inquiries</h2>
+    {/* Simplified leads list */}
+    <div style={{ marginTop: '1rem' }}>
+      {LEADS.map(l => (
+        <div key={l.id} className="glass" style={{ padding: '1rem', backgroundColor: 'white', marginBottom: '1rem', borderRadius: '12px' }}>
+          <p style={{ fontWeight: 700 }}>{l.name} - {l.phone}</p>
+          <p style={{ fontSize: '0.85rem' }}>Interested in: {l.property} ({l.unitRef})</p>
         </div>
-      </div>
-    </div>
-    <div className="glass" style={{ backgroundColor: 'white', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid var(--border-light)' }}>
-          <tr style={{ textAlign: 'left' }}>
-            <th style={{ padding: '1rem' }}>CONTACT</th>
-            <th style={{ padding: '1rem' }}>PROPERTY</th>
-            <th style={{ padding: '1rem' }}>STATUS</th>
-            <th style={{ padding: '1rem' }}>DATE</th>
-            <th style={{ padding: '1rem' }}>ACTIONS</th>
-          </tr>
-        </thead>
-        <tbody>
-          {LEADS.map(l => (
-            <tr key={l.id} style={{ borderBottom: '1px solid var(--border-light)' }}>
-              <td style={{ padding: '1rem' }}>
-                <p style={{ fontWeight: 700 }}>{l.name}</p>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{l.phone}</p>
-              </td>
-              <td style={{ padding: '1rem' }}>
-                <p style={{ fontSize: '0.9rem' }}>{l.property}</p>
-                <p style={{ fontSize: '0.75rem', color: 'var(--primary-blue)' }}>Unit: {l.unitRef}</p>
-              </td>
-              <td style={{ padding: '1rem' }}>
-                <span className="badge badge-verified" style={{ fontSize: '0.7rem' }}>{l.status}</span>
-              </td>
-              <td style={{ padding: '1rem', fontSize: '0.85rem' }}>Today, 10:45 AM</td>
-              <td style={{ padding: '1rem' }}>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button className="btn glass" style={{ padding: '0.4rem', color: 'var(--success-green)' }}><Phone size={16} /></button>
-                  <button className="btn glass" style={{ padding: '0.4rem', color: 'var(--primary-blue)' }}><MessageSquare size={16} /></button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      ))}
     </div>
   </div>
 );
 
 // --- HELPERS ---
+
+const TypeCard = ({ icon, title, desc, onClick }) => (
+  <motion.div 
+    whileHover={{ y: -5, shadow: 'var(--shadow-lg)' }}
+    onClick={onClick}
+    style={{ 
+      backgroundColor: 'white', 
+      padding: '3rem 2rem', 
+      borderRadius: 'var(--radius-xl)', 
+      textAlign: 'center', 
+      cursor: 'pointer', 
+      border: '2px solid var(--border-light)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: '1rem'
+    }}
+  >
+    <div style={{ color: 'var(--primary-blue)', marginBottom: '1rem' }}>{icon}</div>
+    <h3>{title}</h3>
+    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>{desc}</p>
+    <button className="btn btn-outline-blue" style={{ marginTop: '1rem' }}>Select & Start</button>
+  </motion.div>
+);
 
 const Widget = ({ icon, label, value, color }) => (
   <div className="glass" style={{ padding: '1.5rem', borderRadius: 'var(--radius-lg)', backgroundColor: 'white', border: '1px solid var(--border-light)', display: 'flex', gap: '1rem', alignItems: 'center' }}>
@@ -270,35 +486,10 @@ const StatBar = ({ label, value, total, color }) => (
   </div>
 );
 
-const LegendItem = ({ color, label, count }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-    <div style={{ width: '12px', height: '12px', borderRadius: '3px', backgroundColor: color }}></div>
-    <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{label} ({count})</span>
-  </div>
-);
-
-const tabStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.75rem',
-  width: '100%',
-  padding: '0.75rem 1rem',
-  border: 'none',
-  background: 'none',
-  borderRadius: 'var(--radius-md)',
-  fontSize: '0.95rem',
-  fontWeight: 600,
-  color: 'var(--text-muted)',
-  cursor: 'pointer',
-  textAlign: 'left',
-  transition: 'all 0.2s'
-};
-
-const activeTabStyle = {
-  backgroundColor: 'rgba(37, 99, 235, 0.08)',
-  color: 'var(--primary-blue)',
-  borderLeft: '4px solid var(--primary-blue)',
-  borderRadius: '0 var(--radius-md) var(--radius-md) 0'
-};
+const labelStyle = { display: 'block', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '0.5rem' };
+const inputStyle = { width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border-light)', outline: 'none', fontSize: '0.95rem', fontWeight: 600 };
+const tabStyle = { display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', padding: '0.75rem 1rem', border: 'none', background: 'none', borderRadius: 'var(--radius-md)', fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-muted)', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' };
+const activeTabStyle = { backgroundColor: 'rgba(37, 99, 235, 0.08)', color: 'var(--primary-blue)', borderLeft: '4px solid var(--primary-blue)', borderRadius: '0 var(--radius-md) var(--radius-md) 0' };
 
 export default AdminDashboard;
+
