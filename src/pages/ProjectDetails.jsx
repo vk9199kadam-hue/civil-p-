@@ -11,11 +11,31 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const ProjectDetails = () => {
   const { id } = useParams();
-  const project = PROJECTS.find(p => p.id === id);
+  const [project, setProject] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [showVisitForm, setShowVisitForm] = useState(false);
 
-  if (!project) return <div className="container" style={{ padding: '4rem' }}>Project not found</div>;
+  React.useEffect(() => {
+    const fetchProject = async () => {
+      try {
+        const res = await fetch('/api/projects');
+        const data = await res.json();
+        if (res.ok) {
+           const found = data.find(p => p.id === id);
+           setProject(found || null);
+        }
+      } catch (err) {
+        console.error('Failed to fetch project details', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProject();
+  }, [id]);
+
+  if (loading) return <div className="container" style={{ padding: '4rem', textAlign: 'center' }}><h3>Loading Live Project Data...</h3></div>;
+  if (!project) return <div className="container" style={{ padding: '4rem', textAlign: 'center' }}><h3>Project not found in Live Database.</h3></div>;
 
   return (
     <div className="animate-fade-in" style={{ backgroundColor: 'var(--bg-soft-gray)', minHeight: '100vh' }}>

@@ -5,6 +5,24 @@ import { BedDouble, MapPin, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Home = () => {
+  const [dbProjects, setDbProjects] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const res = await fetch('/api/projects');
+        const data = await res.json();
+        if (res.ok) setDbProjects(data);
+      } catch (err) {
+        console.error('Failed to fetch live projects', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProjects();
+  }, []);
+
   return (
     <div className="animate-fade-in" style={{ backgroundColor: 'var(--bg-soft-gray)', minHeight: '100vh', paddingBottom: '4rem' }}>
       
@@ -13,7 +31,7 @@ const Home = () => {
         <div className="container">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ textAlign: 'center' }}>
             <h1 style={{ color: 'white', fontSize: '2.5rem', marginBottom: '1rem' }}>Available Projects</h1>
-            <p style={{ fontSize: '1.1rem', opacity: 0.8 }}>Hand-verified property listings in the Islampur region.</p>
+            <p style={{ fontSize: '1.1rem', opacity: 0.8 }}>Hand-verified property listings in the region.</p>
           </motion.div>
         </div>
       </section>
@@ -21,18 +39,24 @@ const Home = () => {
       {/* 🏢 PROJECT LISTINGS - Admin Filled Content */}
       <section style={{ marginTop: '2rem' }}>
         <div className="container">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem' }}>
-            {PROJECTS.length > 0 ? (
-              PROJECTS.map(p => (
-                <ProjectCard key={p.id} project={p} />
-              ))
-            ) : (
-              <div style={{ textAlign: 'center', padding: '4rem', gridColumn: '1 / -1' }}>
-                <h3>No projects currently available.</h3>
-                <p>Please check back later or contact the admin.</p>
-              </div>
-            )}
-          </div>
+          {loading ? (
+             <div style={{ textAlign: 'center', padding: '4rem' }}>
+                <h3>Loading LIVE properties from database...</h3>
+             </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem' }}>
+              {dbProjects.length > 0 ? (
+                dbProjects.map(p => (
+                  <ProjectCard key={p.id} project={p} />
+                ))
+              ) : (
+                <div style={{ textAlign: 'center', padding: '4rem', gridColumn: '1 / -1' }}>
+                  <h3>No projects currently available.</h3>
+                  <p>Please check back later or contact the admin.</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
