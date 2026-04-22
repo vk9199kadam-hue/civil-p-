@@ -505,32 +505,56 @@ const OverviewView = () => (
   </div>
 );
 
-const ProjectsView = () => (
-  <div className="animate-fade-in">
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-      <h2>Manage Projects</h2>
+const ProjectsView = () => {
+  const [dbProjects, setDbProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const res = await fetch('/api/projects');
+        const data = await res.json();
+        if (res.ok) setDbProjects(data);
+      } catch (err) {
+        console.error('Failed to fetch projects', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProjects();
+  }, []);
+
+  return (
+    <div className="animate-fade-in">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <h2>Manage Projects</h2>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {loading ? <p>Loading real data from database...</p> : null}
+        {!loading && dbProjects.length === 0 ? <p>No projects found in database. Create one!</p> : null}
+        
+        {dbProjects.map(p => (
+          <div key={p.id} className="glass" style={{ padding: '1rem 1.5rem', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '2rem', backgroundColor: 'white', border: '1px solid var(--border-light)' }}>
+            <img src={p.coverImage || '/images/interior.png'} style={{ width: '80px', height: '60px', borderRadius: '4px', objectFit: 'cover' }} alt="" />
+            <div style={{ flex: 1 }}>
+              <p style={{ fontWeight: 700 }}>{p.name}</p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{p.location} • {p.type}</p>
+            </div>
+            <div style={{ display: 'flex', gap: '2rem', textAlign: 'center' }}>
+              <p style={{ fontSize: '0.8rem' }}><span style={{ display: 'block', fontWeight: 800 }}>{p.totalUnits || 1}</span> Units</p>
+              <p style={{ fontSize: '0.8rem' }}><span style={{ display: 'block', fontWeight: 800, color: 'var(--success-green)' }}>{(p.inventory || []).length}</span> Remaining</p>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button className="btn glass" style={{ padding: '0.4rem', fontSize: '0.75rem', fontWeight: 'bold' }}>LIVE</button>
+              <button className="btn glass" style={{ padding: '0.4rem' }}><Edit size={16} /></button>
+              <button className="btn glass" style={{ padding: '0.4rem', color: '#ef4444' }}><Trash2 size={16} /></button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-      {PROJECTS.map(p => (
-        <div key={p.id} className="glass" style={{ padding: '1rem 1.5rem', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '2rem', backgroundColor: 'white', border: '1px solid var(--border-light)' }}>
-          <img src={p.coverImage} style={{ width: '80px', height: '60px', borderRadius: '4px', objectFit: 'cover' }} alt="" />
-          <div style={{ flex: 1 }}>
-            <p style={{ fontWeight: 700 }}>{p.name}</p>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{p.location} • {p.type}</p>
-          </div>
-          <div style={{ display: 'flex', gap: '2rem', textAlign: 'center' }}>
-            <p style={{ fontSize: '0.8rem' }}><span style={{ display: 'block', fontWeight: 800 }}>{p.totalUnits}</span> Units</p>
-            <p style={{ fontSize: '0.8rem' }}><span style={{ display: 'block', fontWeight: 800, color: 'var(--warm-coral)' }}>{p.soldUnits}</span> Sold</p>
-          </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className="btn glass" style={{ padding: '0.4rem' }}><Edit size={16} /></button>
-            <button className="btn glass" style={{ padding: '0.4rem', color: '#ef4444' }}><Trash2 size={16} /></button>
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
+  );
+};
 
 const LeadsView = () => (
   <div className="animate-fade-in">
