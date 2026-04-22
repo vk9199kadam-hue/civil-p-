@@ -179,24 +179,66 @@ const CreateProjectFlow = ({ goToProjects }) => {
                   <input type="text" placeholder="e.g. Main Highway, Islampur" style={inputStyle} value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} />
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={labelStyle}>Project Cover Image (URL)</label>
-                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                  <label style={labelStyle}>Project Cover Image (Direct Upload)</label>
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <div 
+                      onClick={() => document.getElementById('file-upload').click()}
+                      style={{ 
+                        flex: 1, 
+                        height: '100px', 
+                        border: '2px dashed var(--border-light)', 
+                        borderRadius: '12px', 
+                        display: 'flex', 
+                        flexDirection: 'column',
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        cursor: 'pointer',
+                        backgroundColor: '#f9fafb',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--primary-blue)'}
+                      onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--border-light)'}
+                    >
+                      <Plus size={24} color="var(--text-muted)" />
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                        {formData.coverImage ? 'Change Image' : 'Select Photo from Folder'}
+                      </span>
+                    </div>
                     <input 
-                      type="text" 
-                      placeholder="Paste direct image link here" 
-                      style={{ ...inputStyle, flex: 1 }} 
-                      value={formData.coverImage} 
-                      onChange={e => setFormData({...formData, coverImage: e.target.value})} 
+                      id="file-upload"
+                      type="file" 
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            // Resize image before saving to keep DB light
+                            const img = new Image();
+                            img.src = reader.result;
+                            img.onload = () => {
+                              const canvas = document.createElement('canvas');
+                              const MAX_WIDTH = 800;
+                              const scaleSize = MAX_WIDTH / img.width;
+                              canvas.width = MAX_WIDTH;
+                              canvas.height = img.height * scaleSize;
+                              const ctx = canvas.getContext('2d');
+                              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                              const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                              setFormData({...formData, coverImage: dataUrl});
+                            };
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }} 
                     />
                     {formData.coverImage && (
-                      <div style={{ width: '120px', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '2px solid var(--primary-blue)', backgroundColor: '#f0f0f0' }}>
-                        <img src={formData.coverImage} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => e.target.src = 'https://via.placeholder.com/120x80?text=Invalid+Link'} />
+                      <div style={{ width: '150px', height: '100px', borderRadius: '12px', overflow: 'hidden', border: '2px solid var(--primary-blue)' }}>
+                        <img src={formData.coverImage} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
                     )}
                   </div>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
-                    💡 Tip: Upload to <a href="https://imgbb.com/" target="_blank" rel="noreferrer" style={{ color: 'var(--primary-blue)', textDecoration: 'underline' }}>ImgBB.com</a>, then copy the <strong>Direct Link</strong> (ending in .jpg or .png)
-                  </p>
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
                   <label style={labelStyle}>Description</label>
@@ -345,25 +387,61 @@ const CreateProjectFlow = ({ goToProjects }) => {
                   <input type="text" style={inputStyle} placeholder="Lift, Power Backup, Gym..." value={formData.amenitiesText} onChange={e => setFormData({...formData, amenitiesText: e.target.value})} />
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={labelStyle}>Project Cover Image (URL)</label>
-                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                  <label style={labelStyle}>Property Image (Direct Upload)</label>
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <div 
+                      onClick={() => document.getElementById('file-upload-standalone').click()}
+                      style={{ 
+                        flex: 1, 
+                        height: '100px', 
+                        border: '2px dashed var(--border-light)', 
+                        borderRadius: '12px', 
+                        display: 'flex', 
+                        flexDirection: 'column',
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        cursor: 'pointer',
+                        backgroundColor: '#f9fafb'
+                      }}
+                    >
+                      <Plus size={24} color="var(--text-muted)" />
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                        {formData.coverImage ? 'Change Image' : 'Select Photo from Folder'}
+                      </span>
+                    </div>
                     <input 
-                      type="text" 
-                      placeholder="https://images.unsplash.com/photo..." 
-                      className="input-field" 
-                      value={formData.coverImage || ''}
-                      onChange={(e) => setFormData({...formData, coverImage: e.target.value})}
-                      style={{ flex: 1 }}
+                      id="file-upload-standalone"
+                      type="file" 
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            const img = new Image();
+                            img.src = reader.result;
+                            img.onload = () => {
+                              const canvas = document.createElement('canvas');
+                              const MAX_WIDTH = 800;
+                              const scaleSize = MAX_WIDTH / img.width;
+                              canvas.width = MAX_WIDTH;
+                              canvas.height = img.height * scaleSize;
+                              const ctx = canvas.getContext('2d');
+                              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                              setFormData({...formData, coverImage: canvas.toDataURL('image/jpeg', 0.7)});
+                            };
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }} 
                     />
                     {formData.coverImage && (
-                      <div style={{ width: '100px', height: '60px', borderRadius: '8px', overflow: 'hidden', border: '2px solid var(--primary-blue)' }}>
-                        <img src={formData.coverImage} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => e.target.src = 'https://via.placeholder.com/100x60?text=Invalid+URL'} />
+                      <div style={{ width: '150px', height: '100px', borderRadius: '12px', overflow: 'hidden', border: '2px solid var(--primary-blue)' }}>
+                        <img src={formData.coverImage} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
                     )}
                   </div>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
-                    Tip: Upload your photo to <a href="https://imgbb.com/" target="_blank" rel="noreferrer" style={{ color: 'var(--primary-blue)' }}>ImgBB.com</a> and paste the <strong>Direct Link</strong> here.
-                  </p>
                 </div>
               </div>
             </div>
