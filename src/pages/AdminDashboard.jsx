@@ -230,8 +230,8 @@ const CreateProjectFlow = ({ goToProjects }) => {
                             fontWeight: 600, 
                             cursor: 'pointer',
                             border: `1px solid ${(formData.configurations || []).includes(conf) ? 'var(--primary-blue)' : 'var(--border-light)'}`,
-                            backgroundColor: ${(formData.configurations || []).includes(conf) ? 'var(--primary-blue)' : 'white'},
-                            color: ${(formData.configurations || []).includes(conf) ? 'white' : 'var(--text-muted)'}
+                            backgroundColor: (formData.configurations || []).includes(conf) ? 'var(--primary-blue)' : 'white',
+                            color: (formData.configurations || []).includes(conf) ? 'white' : 'var(--text-muted)'
                           }}
                         >
                           {conf}
@@ -259,8 +259,8 @@ const CreateProjectFlow = ({ goToProjects }) => {
                             fontWeight: 600, 
                             cursor: 'pointer',
                             border: `1px solid ${(formData.configurations || []).includes(conf) ? 'var(--primary-blue)' : 'var(--border-light)'}`,
-                            backgroundColor: ${(formData.configurations || []).includes(conf) ? 'var(--primary-blue)' : 'white'},
-                            color: ${(formData.configurations || []).includes(conf) ? 'white' : 'var(--text-muted)'}
+                            backgroundColor: (formData.configurations || []).includes(conf) ? 'var(--primary-blue)' : 'white',
+                            color: (formData.configurations || []).includes(conf) ? 'white' : 'var(--text-muted)'
                           }}
                         >
                           {conf}
