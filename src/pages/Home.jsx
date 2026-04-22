@@ -26,18 +26,8 @@ const Home = () => {
   return (
     <div className="animate-fade-in" style={{ backgroundColor: 'var(--bg-soft-gray)', minHeight: '100vh', paddingBottom: '4rem' }}>
       
-      {/* 🏗️ SIMPLE HEADER SECTION */}
-      <section style={{ backgroundColor: 'var(--deep-navy)', padding: '4rem 0', color: 'white' }}>
-        <div className="container">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ textAlign: 'center' }}>
-            <h1 style={{ color: 'white', fontSize: '2.5rem', marginBottom: '1rem' }}>Available Projects</h1>
-            <p style={{ fontSize: '1.1rem', opacity: 0.8 }}>Hand-verified property listings in the region.</p>
-          </motion.div>
-        </div>
-      </section>
-
       {/* 🏢 PROJECT LISTINGS - Admin Filled Content */}
-      <section style={{ marginTop: '2rem' }}>
+      <section style={{ marginTop: '4rem' }}>
         <div className="container">
           {loading ? (
              <div style={{ textAlign: 'center', padding: '4rem' }}>
